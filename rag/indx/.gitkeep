@@ -1,0 +1,2 @@
+# This file ensures the rag/index directory is tracked by git
+# FAISS index files and metadata will be stored here

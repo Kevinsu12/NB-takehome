@@ -1,0 +1,47 @@
+{
+  "period": "2024-Q3",
+  "market_data": {
+    "period": "2024-Q3",
+    "sp500_tr": 12.3,
+    "ust10y_yield": 4.25,
+    "dxy_chg": -2.1,
+    "vix_peak": 28.7,
+    "market_cap": 45000000000.0,
+    "trading_volume": 2500000.0,
+    "volatility_index": 18.5,
+    "sector_performance": {
+      "technology": 12.3,
+      "healthcare": 8.7,
+      "financials": -2.1
+    },
+    "timestamp": 1757229037.451144
+  },
+  "economic_data": {
+    "period": "2024-Q3",
+    "gdp_growth": 2.4,
+    "inflation_rate": 3.2,
+    "unemployment_rate": 4.1,
+    "interest_rate": 5.25,
+    "timestamp": 1757229037.5025752
+  },
+  "normalized": {
+    "period": "2024-Q3",
+    "sp500_tr": 12.3,
+    "ust10y_yield": 4.25,
+    "dxy_chg": -2.1,
+    "vix_peak": 28.7,
+    "gdp_growth": 2.4,
+    "inflation_rate": 3.2,
+    "unemployment_rate": 4.1,
+    "interest_rate": 5.25,
+    "market_cap": 45000000000.0,
+    "trading_volume": 2500000.0,
+    "volatility_index": 18.5,
+    "timestamp": 1757229037.502968,
+    "technology_performance": 12.3,
+    "healthcare_performance": 8.7,
+    "financials_performance": -2.1
+  },
+  "timestamp": 1757229037.502982,
+  "pinned": false
+}

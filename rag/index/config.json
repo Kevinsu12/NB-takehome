@@ -1,0 +1,6 @@
+{
+  "embedding_model": "text-embedding-3-small",
+  "embedding_dim": 1536,
+  "document_count": 75,
+  "index_type": "IndexFlatIP"
+}
