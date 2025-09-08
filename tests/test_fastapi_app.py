@@ -107,7 +107,11 @@ class TestFastAPIApp:
     async def test_generate_market_context_success(self, client, mock_run):
         """Test successful market context generation."""
         # Mock successful pipeline run
-        mock_run.return_value = "Q3 2024 Market Analysis: Technology sector shows strong performance..."
+        mock_run.return_value = {
+            "formatted_context": "Q3 2024 Market Analysis: Technology sector shows strong performance...",
+            "draft_json": {"period": "2024-Q3", "headline": "Test headline"},
+            "retrieved_chunks": []
+        }
         
         response = client.post("/market-context?period=2024-Q3")
         
@@ -146,11 +150,14 @@ class TestFastAPIApp:
     def test_generate_market_context_valid_period_formats(self, client, mock_run):
         """Test market context generation with valid period formats."""
         # Mock successful pipeline run
-        mock_run.return_value = "Market analysis for the period..."
-        
         valid_periods = ["2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1"]
         
         for period in valid_periods:
+            mock_run.return_value = {
+                "formatted_context": "Market analysis for the period...",
+                "draft_json": {"period": period, "headline": "Test headline"},
+                "retrieved_chunks": []
+            }
             response = client.post(f"/market-context?period={period}")
             
             assert response.status_code == 200
@@ -252,7 +259,9 @@ class TestFastAPIApp:
         # Test valid response
         response = MarketContextResponse(
             formatted_context="Test market analysis...",
-            period="2024-Q3"
+            period="2024-Q3",
+            draft_json={"period": "2024-Q3", "headline": "Test headline"},
+            retrieved_chunks=[]
         )
         
         assert response.formatted_context == "Test market analysis..."
@@ -314,7 +323,11 @@ class TestFastAPIApp:
         """Test rate limiting if implemented."""
         # This is a placeholder for rate limiting tests
         # Rate limiting would need to be implemented first
-        mock_run.return_value = "Test response"
+        mock_run.return_value = {
+            "formatted_context": "Test response",
+            "draft_json": {"period": "2024-Q3", "headline": "Test headline"},
+            "retrieved_chunks": []
+        }
         
         # Make multiple requests
         for i in range(5):
@@ -327,7 +340,11 @@ class TestFastAPIApp:
         import threading
         import time
         
-        mock_run.return_value = "Concurrent test response"
+        mock_run.return_value = {
+            "formatted_context": "Concurrent test response",
+            "draft_json": {"period": "2024-Q3", "headline": "Test headline"},
+            "retrieved_chunks": []
+        }
         
         results = []
         errors = []

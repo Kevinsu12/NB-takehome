@@ -1,7 +1,6 @@
-from app.clients.api_clients import LLMClient
+from app.utils.llm_utils import create_llm_client
 import logging
 import json
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,10 @@ async def draft_node(state: dict) -> dict:
     logger.info(f"Drafting market context for {period}")
     
     try:
-        llm_client = LLMClient()
+        # Create LLM client with optional rate limiting and config
+        rate_limiter = state.get("rate_limiter")
+        config = state.get("config")
+        llm_client = create_llm_client(rate_limiter, config)
         
         # Load prompts
         with open("app/prompts/system.md", "r") as f:
@@ -43,13 +45,13 @@ async def draft_node(state: dict) -> dict:
         # Combine system prompt with style guide and few-shot examples
         full_system_prompt = system_prompt + "\n\n" + style_guide + "\n\n" + fewshot_examples
         
-        logger.info("Generating draft using OpenAI with temperature=0")
+        logger.info(f"Generating draft using OpenAI with config temperature")
         
-        # Generate draft with deterministic settings (temperature=0)
+        # Generate draft using config temperature
         draft_response = await llm_client.generate(
             system_prompt=full_system_prompt,
-            user_prompt=user_prompt,
-            temperature=0  # Deterministic generation
+            user_prompt=user_prompt
+            # temperature will use config value
         )
         
         # Parse the response as JSON

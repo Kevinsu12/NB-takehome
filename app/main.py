@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from app.app import MarketContextPipeline
-from app.schemas.market_context import MarketContext
 from pydantic import BaseModel
 import logging
 import os
 import traceback
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +24,8 @@ class MarketContextResponse(BaseModel):
     """Response model for formatted market context."""
     formatted_context: str
     period: str
+    draft_json: dict  # Add the draft JSON output
+    retrieved_chunks: list  # Add the retrieved chunk information
 
 
 @app.on_event("startup")
@@ -64,12 +66,14 @@ async def generate_market_context(
             )
         
         # Run the LangGraph pipeline
-        formatted_context = await pipeline.run(period)
+        result = await pipeline.run(period)
         
         logger.info(f"Successfully generated market context for {period}")
         return MarketContextResponse(
-            formatted_context=formatted_context,
-            period=period
+            formatted_context=result["formatted_context"],
+            period=period,
+            draft_json=result["draft_json"],
+            retrieved_chunks=result.get("retrieved_chunks", [])
         )
         
     except HTTPException:
@@ -118,10 +122,14 @@ async def health_check():
         # Check if vector store is available
         vector_status = "available" if pipeline.vectorstore and pipeline.vectorstore.is_indexed() else "not_indexed"
         
+        # Get rate limiter status
+        rate_limiter_status = "active" if pipeline.rate_limiter else "inactive"
+        
         return {
             "status": "healthy", 
             "service": "market-context-generator",
             "vector_store": vector_status,
+            "rate_limiter": rate_limiter_status,
             "version": "1.0.0"
         }
     except Exception as e:
@@ -135,9 +143,34 @@ async def health_check():
         )
 
 
+@app.get("/rate-limit-status")
+async def rate_limit_status():
+    """Get current rate limiting status."""
+    try:
+        if not pipeline.rate_limiter:
+            return {"error": "Rate limiter not initialized"}
+        
+        # Get current usage
+        current_requests = len(pipeline.rate_limiter.request_times)
+        current_tokens = await pipeline.rate_limiter.token_tracker.get_usage_in_window()
+        
+        return {
+            "rate_limiter": {
+                "requests_per_minute": pipeline.rate_limiter.config.requests_per_minute,
+                "tokens_per_minute": pipeline.rate_limiter.config.tokens_per_minute,
+                "max_concurrent_requests": pipeline.rate_limiter.config.max_concurrent_requests,
+                "current_requests": current_requests,
+                "current_tokens": current_tokens,
+                "available_requests": pipeline.rate_limiter.config.requests_per_minute - current_requests,
+                "available_tokens": pipeline.rate_limiter.config.tokens_per_minute - current_tokens
+            }
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def _is_valid_period_format(period: str) -> bool:
     """Validate period format (YYYY-QX)."""
-    import re
     pattern = r'^\d{4}-Q[1-4]$'
     return bool(re.match(pattern, period))
 

@@ -9,6 +9,8 @@ import hashlib
 import os
 from app.rag.pdfLoader import ChunkMetadata
 from app.clients.api_clients import LLMClient
+from app.clients.rate_limiter import RateLimiter
+from app.utils.llm_utils import create_llm_client
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +23,17 @@ INDEX_DIR = "rag/index"
 class VectorStore:
     """FAISS-based vector store with persistence and deterministic behavior."""
     
-    def __init__(self, index_dir: str = INDEX_DIR):
+    def __init__(self, index_dir: str = INDEX_DIR, rate_limiter: RateLimiter = None, config=None):
         self.index = None
         self.documents = []
         self.metadata = []
-        self.embedding_model = EMBEDDING_MODEL
+        # Use config embedding model or fallback to default
+        self.embedding_model = config.openai_embedding_model if config else EMBEDDING_MODEL
         self.index_dir = Path(index_dir)
         self.index_dir.mkdir(parents=True, exist_ok=True)
         
-        # Initialize LLM client for embeddings
-        self.llm_client = LLMClient()
+        # Initialize LLM client for embeddings with optional rate limiting and config
+        self.llm_client = create_llm_client(rate_limiter, config)
         
         # File paths for persistence
         self.index_path = self.index_dir / "faiss.index"
@@ -140,8 +143,7 @@ class VectorStore:
             'chunk_id': metadata.chunk_id,
             'source_file': metadata.source_file,
             'page_number': metadata.page_number,
-            'is_market_context': metadata.is_market_context,
-            'confidence_score': metadata.confidence_score
+            'is_market_context': metadata.is_market_context
         }
     
     def _generate_chunk_id(self, document: str) -> str:
@@ -172,8 +174,7 @@ class VectorStore:
         self, 
         query: str, 
         k: int = 4,
-        filter_market_context: bool = True,
-        min_confidence: float = 0.0
+        filter_market_context: bool = True
     ) -> List[Dict[str, Any]]:
         """Search for similar documents with optional filtering."""
         if not self.index or not self.documents:
@@ -197,9 +198,6 @@ class VectorStore:
                 
                 # Apply filters
                 if filter_market_context and not metadata['is_market_context']:
-                    continue
-                
-                if metadata['confidence_score'] < min_confidence:
                     continue
                 
                 result = {

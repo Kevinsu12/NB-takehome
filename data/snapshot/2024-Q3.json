@@ -14,7 +14,7 @@
       "healthcare": 8.7,
       "financials": -2.1
     },
-    "timestamp": 1757229037.451144
+    "timestamp": 1757289578.514498
   },
   "economic_data": {
     "period": "2024-Q3",
@@ -22,7 +22,7 @@
     "inflation_rate": 3.2,
     "unemployment_rate": 4.1,
     "interest_rate": 5.25,
-    "timestamp": 1757229037.5025752
+    "timestamp": 1757289578.5657978
   },
   "normalized": {
     "period": "2024-Q3",
@@ -37,11 +37,11 @@
     "market_cap": 45000000000.0,
     "trading_volume": 2500000.0,
     "volatility_index": 18.5,
-    "timestamp": 1757229037.502968,
+    "timestamp": 1757289578.566002,
     "technology_performance": 12.3,
     "healthcare_performance": 8.7,
     "financials_performance": -2.1
   },
-  "timestamp": 1757229037.502982,
+  "timestamp": 1757289578.566011,
   "pinned": false
 }

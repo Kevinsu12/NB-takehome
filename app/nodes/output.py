@@ -29,8 +29,12 @@ async def output_node(state: Dict[str, Any]) -> Dict[str, Any]:
             logger.error("No validated context found in state")
             return {**state, "formatted_context": "No market context available to format"}
         
-        # Initialize LLM client
-        llm_client = LLMClient()
+        # Initialize LLM client with config
+        config = state.get("config")
+        llm_client = LLMClient(config)
+        
+        # Get retrieved chunks information
+        retrieved_chunks = state.get("retrieved_chunks", [])
         
         # Create formatting prompt
         system_prompt = """You are a financial report formatter. Convert structured market context data into a well-formatted paragraph report.
@@ -41,21 +45,29 @@ Format the output as a professional market context report with:
 3. A comprehensive narrative paragraph
 4. Key statistics highlighted
 5. Data sources listed
+6. Source document references (chunk IDs and source files)
 
 Make it readable and professional for financial professionals."""
 
+        # Include chunk information in the prompt
+        chunk_info = ""
+        if retrieved_chunks:
+            chunk_info = "\n\nSource Document References:\n"
+            for i, chunk in enumerate(retrieved_chunks, 1):
+                chunk_info += f"{i}. Chunk ID: {chunk['chunk_id']} | Source: {chunk['source_file']} | Page: {chunk['page_number']} | Similarity: {chunk['similarity_score']:.3f}\n"
+
         user_prompt = f"""Convert this market context JSON into a formatted paragraph report:
 
-{json.dumps(validated_context.model_dump(), indent=2)}
+{json.dumps(validated_context.model_dump(), indent=2)}{chunk_info}
 
-Format it as a professional market context report that could be sent to clients or included in a quarterly report."""
+Format it as a professional market context report that could be sent to clients or included in a quarterly report. Include the source document references at the end."""
 
-        # Generate formatted output
+        # Generate formatted output using config temperature
         logger.info("Generating formatted paragraph using OpenAI")
         formatted_context = await llm_client.generate(
             system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            temperature=0.1  # Slightly higher for more natural formatting
+            user_prompt=user_prompt
+            # temperature will use config value
         )
         
         logger.info("Successfully generated formatted market context")

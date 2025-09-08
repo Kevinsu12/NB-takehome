@@ -15,7 +15,6 @@ class ChunkMetadata(BaseModel):
     source_file: str
     page_number: int
     is_market_context: bool = True
-    confidence_score: float = 0.8
 
 # Download required NLTK data if not already present
 try:
@@ -132,8 +131,7 @@ class PDFLoader:
                         chunk_id=f"chunk_{chunk_counter:04d}",
                         source_file=pdf_file.name,  # Use actual PDF filename
                         page_number=i + 1,  # Estimate page number within this PDF
-                        is_market_context=True,
-                        confidence_score=0.8
+                        is_market_context=True
                     )
                     metadata.append(meta)
                     chunk_counter += 1
@@ -219,6 +217,7 @@ class PDFLoader:
         chunks = [chunk.strip() for chunk in chunks if len(chunk.strip()) > 50]
         
         return chunks
+    
     
     def _create_overlap_chunk(self, previous_chunk: str, sentences: List[str], current_index: int) -> str:
         """Create overlap by including last few sentences from previous chunk."""

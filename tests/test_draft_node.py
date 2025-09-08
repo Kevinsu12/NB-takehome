@@ -149,9 +149,9 @@ class TestDraftNode:
         }
         
         # Mock the LLM client to avoid API calls
-        with patch('app.nodes.draft.LLMClient') as mock_llm_class:
+        with patch('app.nodes.draft.create_llm_client') as mock_create_llm:
             mock_llm = AsyncMock()
-            mock_llm_class.return_value = mock_llm
+            mock_create_llm.return_value = mock_llm
             
             # Mock the LLM response
             mock_response = {
@@ -234,9 +234,9 @@ class TestDraftNode:
         state = await self.setup_test_data()
         
         # Mock the LLM client for deterministic testing
-        with patch('app.nodes.draft.LLMClient') as mock_llm_class:
+        with patch('app.nodes.draft.create_llm_client') as mock_create_llm:
             mock_llm = AsyncMock()
-            mock_llm_class.return_value = mock_llm
+            mock_create_llm.return_value = mock_llm
             
             # Create a consistent mock response
             mock_response = {
@@ -309,9 +309,9 @@ class TestDraftNode:
         state = await self.setup_test_data()
         
         # Mock the LLM client
-        with patch('app.nodes.draft.LLMClient') as mock_llm_class:
+        with patch('app.nodes.draft.create_llm_client') as mock_create_llm:
             mock_llm = AsyncMock()
-            mock_llm_class.return_value = mock_llm
+            mock_create_llm.return_value = mock_llm
             
             # Create a high-quality mock response
             mock_response = {

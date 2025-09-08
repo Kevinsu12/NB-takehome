@@ -49,7 +49,11 @@ class TestAPIIntegration:
         # Mock the pipeline to avoid actual API calls
         with patch('app.main.pipeline') as mock_pipeline:
             # Mock the run method to return a test response
-            mock_pipeline.run = AsyncMock(return_value="Q3 2024 Market Analysis: Test integration response...")
+            mock_pipeline.run = AsyncMock(return_value={
+                "formatted_context": "Q3 2024 Market Analysis: Test integration response...",
+                "draft_json": {"period": "2024-Q3", "headline": "Test headline"},
+                "retrieved_chunks": []
+            })
             
             response = client.post("/market-context?period=2024-Q3")
             
@@ -81,11 +85,14 @@ class TestAPIIntegration:
     def test_valid_period_formats_integration(self, client):
         """Test valid period formats with mocked pipeline."""
         with patch('app.main.pipeline') as mock_pipeline:
-            mock_pipeline.run = AsyncMock(return_value="Valid period test response...")
-            
             valid_periods = ["2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1"]
             
             for period in valid_periods:
+                mock_pipeline.run = AsyncMock(return_value={
+                    "formatted_context": "Valid period test response...",
+                    "draft_json": {"period": period, "headline": "Test headline"},
+                    "retrieved_chunks": []
+                })
                 response = client.post(f"/market-context?period={period}")
                 assert response.status_code == 200
                 
@@ -136,7 +143,11 @@ class TestAPIIntegration:
         import time
         
         with patch('app.main.pipeline') as mock_pipeline:
-            mock_pipeline.run = AsyncMock(return_value="Concurrent test response...")
+            mock_pipeline.run = AsyncMock(return_value={
+                "formatted_context": "Concurrent test response...",
+                "draft_json": {"period": "2024-Q3", "headline": "Test headline"},
+                "retrieved_chunks": []
+            })
             
             results = []
             errors = []
@@ -167,7 +178,11 @@ class TestAPIIntegration:
     def test_response_model_validation(self, client):
         """Test that response models are properly validated."""
         with patch('app.main.pipeline') as mock_pipeline:
-            mock_pipeline.run = AsyncMock(return_value="Model validation test response...")
+            mock_pipeline.run = AsyncMock(return_value={
+                "formatted_context": "Model validation test response...",
+                "draft_json": {"period": "2024-Q3", "headline": "Test headline"},
+                "retrieved_chunks": []
+            })
             
             response = client.post("/market-context?period=2024-Q3")
             assert response.status_code == 200
@@ -195,7 +210,11 @@ class TestAPIIntegration:
         """Test query parameter validation."""
         # Test with valid query parameters
         with patch('app.main.pipeline') as mock_pipeline:
-            mock_pipeline.run = AsyncMock(return_value="Query parameter test...")
+            mock_pipeline.run = AsyncMock(return_value={
+                "formatted_context": "Query parameter test...",
+                "draft_json": {"period": "2024-Q3", "headline": "Test headline"},
+                "retrieved_chunks": []
+            })
             
             response = client.post("/market-context?period=2024-Q3")
             assert response.status_code == 200

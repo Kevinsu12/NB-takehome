@@ -8,8 +8,9 @@ from app.nodes.revise import revise_node
 from app.nodes.output import output_node
 from app.schemas.market_context import MarketContext
 from app.rag.vectorStore import VectorStore
-from app.rag.pdfLoader import ChunkMetadata
 from app.rag.pdfLoader import PDFLoader
+from app.clients.rate_limiter import RateLimiter
+from app.config import APIConfig
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,9 @@ class MarketContextState(TypedDict):
     final_context: MarketContext
     formatted_context: str
     vectorstore: VectorStore
+    rate_limiter: RateLimiter
+    config: APIConfig
+    retrieved_chunks: list
     error: str | None
 
 
@@ -33,11 +37,16 @@ class MarketContextPipeline:
     def __init__(self):
         self.graph = None
         self.vectorstore = None
+        self.rate_limiter = None
+        self.config = APIConfig.from_env()
         
     async def initialize(self):
         """Initialize the pipeline components."""
-        # Initialize vector store
-        self.vectorstore = VectorStore()
+        # Initialize rate limiter
+        self.rate_limiter = RateLimiter(self.config.rate_limit_config)
+        
+        # Initialize vector store with rate limiter and config
+        self.vectorstore = VectorStore(rate_limiter=self.rate_limiter, config=self.config)
         pdf_loader = PDFLoader()
         
         # Load and index documents with proper metadata
@@ -102,8 +111,8 @@ class MarketContextPipeline:
         logger.info("Validation status unclear - proceeding with revision")
         return True
         
-    async def run(self, period: str) -> str:
-        """Run the pipeline for a given period."""
+    async def run(self, period: str) -> dict:
+        """Run the pipeline and return both draft JSON and final output."""
         if not self.graph:
             raise RuntimeError("Pipeline not initialized")
             
@@ -116,14 +125,19 @@ class MarketContextPipeline:
             final_context=None,
             formatted_context="",
             vectorstore=self.vectorstore,
+            rate_limiter=self.rate_limiter,
+            config=self.config,
+            retrieved_chunks=[],
             error=None
         )
-        
-        # VectorStore is now passed to nodes via the state object
         
         result = await self.graph.ainvoke(initial_state)
         
         if result.get("error"):
             raise RuntimeError(result["error"])
             
-        return result["formatted_context"]
+        return {
+            "formatted_context": result["formatted_context"],
+            "draft_json": result.get("draft_context", {}),
+            "retrieved_chunks": result.get("retrieved_chunks", [])
+        }

@@ -1,4 +1,4 @@
-from app.clients.api_clients import LLMClient
+from app.utils.llm_utils import create_llm_client
 from app.schemas.market_context import MarketContext
 import logging
 import json
@@ -13,7 +13,10 @@ async def revise_node(state: dict) -> dict:
     logger.info("Revising market context")
     
     try:
-        llm_client = LLMClient()
+        # Create LLM client with optional rate limiting and config
+        rate_limiter = state.get("rate_limiter")
+        config = state.get("config")
+        llm_client = create_llm_client(rate_limiter, config)
         
         # Load revision prompts
         with open("app/prompts/system.md", "r") as f:
@@ -32,8 +35,8 @@ async def revise_node(state: dict) -> dict:
         # Generate revision with deterministic settings
         revised_response = await llm_client.generate(
             system_prompt=system_prompt + "\n\nFocus on clarity and consistency.",
-            user_prompt=revision_prompt,
-            temperature=0  # Deterministic
+            user_prompt=revision_prompt
+            # temperature will use config value
         )
         
         # Parse and validate the revised context

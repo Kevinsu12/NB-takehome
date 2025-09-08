@@ -76,8 +76,8 @@ class TestReviseNode:
     
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open)
-    @patch("app.nodes.revise.LLMClient")
-    async def test_revise_node_success(self, mock_llm_client_class, mock_file):
+    @patch("app.nodes.revise.create_llm_client")
+    async def test_revise_node_success(self, mock_create_llm, mock_file):
         """Test successful revision with valid validated context."""
         print("\n=== Testing Revise Node Success ===")
         
@@ -87,7 +87,7 @@ class TestReviseNode:
             
             # Setup mock LLM client
             mock_llm_client = AsyncMock()
-            mock_llm_client_class.return_value = mock_llm_client
+            mock_create_llm.return_value = mock_llm_client
             
             # Create mock revised response
             revised_data = self.create_revised_context_data()
@@ -128,7 +128,6 @@ class TestReviseNode:
             mock_llm_client.generate.assert_called_once()
             call_args = mock_llm_client.generate.call_args
             assert "Focus on clarity and consistency" in call_args[1]["system_prompt"], "System prompt should include revision focus"
-            assert "temperature" in call_args[1] and call_args[1]["temperature"] == 0, "Should use deterministic temperature"
             
             print("Revise node success test passed!")
             print(f"Original headline: {validated_context.headline}")
@@ -144,8 +143,8 @@ class TestReviseNode:
     
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open)
-    @patch("app.nodes.revise.LLMClient")
-    async def test_revise_node_llm_failure(self, mock_llm_client_class, mock_file):
+    @patch("app.nodes.revise.create_llm_client")
+    async def test_revise_node_llm_failure(self, mock_create_llm, mock_file):
         """Test revision when LLM call fails - should fallback to validated context."""
         print("\n=== Testing Revise Node LLM Failure ===")
         
@@ -155,7 +154,7 @@ class TestReviseNode:
             
             # Setup mock LLM client to raise exception
             mock_llm_client = AsyncMock()
-            mock_llm_client_class.return_value = mock_llm_client
+            mock_create_llm.return_value = mock_llm_client
             mock_llm_client.generate.side_effect = Exception("LLM API call failed")
             
             # Create state with validated context
@@ -197,8 +196,8 @@ class TestReviseNode:
     
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open)
-    @patch("app.nodes.revise.LLMClient")
-    async def test_revise_node_invalid_json_response(self, mock_llm_client_class, mock_file):
+    @patch("app.nodes.revise.create_llm_client")
+    async def test_revise_node_invalid_json_response(self, mock_create_llm, mock_file):
         """Test revision when LLM returns invalid JSON - should fallback to validated context."""
         print("\n=== Testing Revise Node Invalid JSON Response ===")
         
@@ -208,7 +207,7 @@ class TestReviseNode:
             
             # Setup mock LLM client to return invalid JSON
             mock_llm_client = AsyncMock()
-            mock_llm_client_class.return_value = mock_llm_client
+            mock_create_llm.return_value = mock_llm_client
             mock_llm_client.generate.return_value = "This is not valid JSON"
             
             # Create state with validated context
@@ -247,8 +246,8 @@ class TestReviseNode:
     
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open)
-    @patch("app.nodes.revise.LLMClient")
-    async def test_revise_node_invalid_schema_response(self, mock_llm_client_class, mock_file):
+    @patch("app.nodes.revise.create_llm_client")
+    async def test_revise_node_invalid_schema_response(self, mock_create_llm, mock_file):
         """Test revision when LLM returns JSON that doesn't match schema - should fallback to validated context."""
         print("\n=== Testing Revise Node Invalid Schema Response ===")
         
@@ -258,7 +257,7 @@ class TestReviseNode:
             
             # Setup mock LLM client to return invalid schema JSON
             mock_llm_client = AsyncMock()
-            mock_llm_client_class.return_value = mock_llm_client
+            mock_create_llm.return_value = mock_llm_client
             invalid_schema_data = {
                 "period": "2024-Q3",
                 "headline": "Revised headline",
@@ -302,8 +301,8 @@ class TestReviseNode:
     
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open)
-    @patch("app.nodes.revise.LLMClient")
-    async def test_revise_node_file_read_error(self, mock_llm_client_class, mock_file):
+    @patch("app.nodes.revise.create_llm_client")
+    async def test_revise_node_file_read_error(self, mock_create_llm, mock_file):
         """Test revision when system prompt file cannot be read - should fallback to validated context."""
         print("\n=== Testing Revise Node File Read Error ===")
         
@@ -313,7 +312,7 @@ class TestReviseNode:
             
             # Setup mock LLM client
             mock_llm_client = AsyncMock()
-            mock_llm_client_class.return_value = mock_llm_client
+            mock_create_llm.return_value = mock_llm_client
             
             # Create state with validated context
             validated_context = self.create_validated_context()
@@ -383,8 +382,8 @@ class TestReviseNode:
     
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open)
-    @patch("app.nodes.revise.LLMClient")
-    async def test_revise_node_state_preservation(self, mock_llm_client_class, mock_file):
+    @patch("app.nodes.revise.create_llm_client")
+    async def test_revise_node_state_preservation(self, mock_create_llm, mock_file):
         """Test that revise node preserves other state fields."""
         print("\n=== Testing Revise Node State Preservation ===")
         
@@ -394,7 +393,7 @@ class TestReviseNode:
             
             # Setup mock LLM client
             mock_llm_client = AsyncMock()
-            mock_llm_client_class.return_value = mock_llm_client
+            mock_create_llm.return_value = mock_llm_client
             
             # Create mock revised response
             revised_data = self.create_revised_context_data()

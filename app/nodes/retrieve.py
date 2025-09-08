@@ -21,10 +21,19 @@ async def retrieve_node(state: dict) -> dict:
             search_results = await vectorstore.similarity_search(
                 query=query,
                 k=K,
-                filter_market_context=True,
-                min_confidence=0.5
+                filter_market_context=True
             )
             documents = [result["document"] for result in search_results]
+            # Extract chunk metadata for inclusion in final output
+            retrieved_chunks = [
+                {
+                    "chunk_id": result["chunk_id"],
+                    "source_file": result["metadata"]["source_file"],
+                    "page_number": result["metadata"]["page_number"],
+                    "similarity_score": float(result["score"])
+                }
+                for result in search_results
+            ]
             logger.info(f"Retrieved {len(documents)} documents from vectorstore")
         else:
             # Fallback to mock data if vectorstore not available
@@ -33,9 +42,10 @@ async def retrieve_node(state: dict) -> dict:
                 f"Economic indicators for {period} show mixed signals...",
                 f"Market volatility in {period} driven by geopolitical factors..."
             ]
+            retrieved_chunks = []
         
         logger.info(f"Retrieved {len(documents)} documents")
-        return {**state, "documents": documents}
+        return {**state, "documents": documents, "retrieved_chunks": retrieved_chunks}
         
     except Exception as e:
         logger.error(f"Error in retrieve_node: {str(e)}")

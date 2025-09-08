@@ -297,22 +297,37 @@ class MarketDataClient(BaseAPIClient):
 
 
 class LLMClient(BaseAPIClient):
-    """Client for LLM API calls with deterministic settings."""
+    """Client for LLM API calls with configurable settings."""
     
-    def __init__(self):
+    def __init__(self, config=None):
         super().__init__("https://api.openai.com/v1")
         self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
+        
+        # Use config values or fallback to environment variables
+        self.model = os.getenv("OPENAI_MODEL", "gpt-4")
+        self.max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", "2000"))
+        self.temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.0"))
+        
+        # Override with config if provided
+        if config:
+            self.model = config.openai_model
+            self.max_tokens = config.openai_max_tokens
+            self.temperature = config.openai_temperature
     
     async def generate(
         self, 
         system_prompt: str, 
         user_prompt: str, 
-        temperature: float = 0
+        temperature: float = None
     ) -> str:
         """Generate text using OpenAI API."""
-        logger.info("Generating text using OpenAI GPT-4")
+        # Use config temperature if not specified
+        if temperature is None:
+            temperature = self.temperature
+            
+        logger.info(f"Generating text using OpenAI {self.model}")
         
         return await self._generate_openai(system_prompt, user_prompt, temperature)
     
@@ -330,13 +345,13 @@ class LLMClient(BaseAPIClient):
         }
         
         payload = {
-            "model": "gpt-4",
+            "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
             "temperature": temperature,
-            "max_tokens": 2000
+            "max_tokens": self.max_tokens
         }
         
         response = await self._request_with_retry(
